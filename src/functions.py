@@ -115,7 +115,7 @@ def add_data_to_new_matches(all_pairs_regional,email_list):
     #add email and region data to the matches
     df = pd.merge(all_pairs_regional,email_list[['full_name','region','Email Address']].rename(columns={'Email Address':'email_address'}),left_on='mentor',right_on='full_name',suffixes=("_mentor", "_mentor"))
     df = pd.merge(df,email_list[['full_name','region','Email Address']].rename(columns={'Email Address':'email_address'}),left_on='mentee',right_on='full_name',suffixes=("_mentor", "_mentee"))
-    st.dataframe(df[df.region_mentor == 'Auckland'])
+    st.dataframe(df)
     return df[['mentee','mentor','email_address_mentor','email_address_mentee','region_mentor','region_mentee','type']]
 
 def save_new_matches_into_historic(date_input,latest_round,new_matches,historic_matches):
