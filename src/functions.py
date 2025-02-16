@@ -112,11 +112,20 @@ def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data
     return all_pairs_regional
 
 def add_data_to_new_matches(all_pairs_regional,email_list):
+    email_list_columns = ['full_name','region','Email Address','Job Title','Organisation']
+    column_dict = {'Email Address':'email_address','Job Title':'job_title','Organisation':'organisation'}
     #add email and region data to the matches
-    df = pd.merge(all_pairs_regional,email_list[['full_name','region','Email Address']].rename(columns={'Email Address':'email_address'}),left_on='mentor',right_on='full_name',suffixes=("_mentor", "_mentor"))
-    df = pd.merge(df,email_list[['full_name','region','Email Address']].rename(columns={'Email Address':'email_address'}),left_on='mentee',right_on='full_name',suffixes=("_mentor", "_mentee"))
+    df = pd.merge(all_pairs_regional,
+                  email_list[email_list_columns]
+                  .rename(columns=column_dict),
+                  left_on='mentor',right_on='full_name',suffixes=("_mentor", "_mentor"))
+    df = pd.merge(df,email_list[email_list_columns]
+                  .rename(columns=column_dict),
+                  left_on='mentee',right_on='full_name',suffixes=("_mentor", "_mentee"))
+    #replace any NANs with (we don't know sorry!)
+    df.fillna("(we don't know sorry, you'll have to ask them!)",inplace=True)
     st.dataframe(df)
-    return df[['mentee','mentor','email_address_mentor','email_address_mentee','region_mentor','region_mentee','type']]
+    return df[['mentee','mentor','email_address_mentee','email_address_mentor','region_mentee','region_mentor','job_title_mentee','job_title_mentor','organisation_mentee','organisation_mentor','type']]
 
 def save_new_matches_into_historic(date_input,latest_round,new_matches,historic_matches):
     #format the new matches to fit the historic matches df and combine them

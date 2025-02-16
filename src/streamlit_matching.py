@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import functions as func
+from datetime import datetime
+
 st.header('YEPN Coffe Catch Up Matching ☕')
 
 
@@ -8,12 +10,14 @@ st.header('YEPN Coffe Catch Up Matching ☕')
 uploaded_file = st.file_uploader("Upload historic matches csv")
 
 if uploaded_file is not None:
-    # Read the uploaded CSV file into a DataFrame
-    historic_matches = pd.read_csv(uploaded_file)
-    
-    # Display the DataFrame in the Streamlit app
-    st.markdown("Historic matches:")
-    st.dataframe(historic_matches)
+    try:
+        # Read the file as a CSV
+        historic_matches = pd.read_csv(uploaded_file)
+        # Display the DataFrame in the Streamlit app
+        st.markdown("Historic matches (sample of last 10 entries):")
+        st.dataframe(historic_matches.tail(10))
+    except Exception as e:
+        st.error(f"Error reading file: {e}")
 
     
     uploaded_file2 = st.file_uploader("Upload email listerv data")
@@ -30,14 +34,21 @@ if uploaded_file is not None:
         #drop duplicates of the same full name by sorting by the last date they changed their info and taking the first entry
         email_list = email_list.drop_duplicates(subset='full_name', keep='first')
 
+        #select mentors and mentees
         #since duplicates have been removed, this will take the latest mentor/mentee status selected by the participant
-        mentees = email_list[email_list['Do you want to join Coffee Catchup as a Mentee?'] == 'Yes'].copy()
-        #store the region 
-        mentee_data_list = mentees[['full_name','region']].to_dict(orient="records")
-        mentee_name_list = mentees.full_name.unique()
+        #select mentors
         mentors = email_list[email_list['Do you want to join Coffee Catchup as a Mentor?'] == 'Yes'].copy()
         mentor_data_list = mentors[['full_name','region']].to_dict(orient="records")
         mentor_name_list = mentors.full_name.unique()
+        #select mentees
+        mentees = email_list[email_list['Do you want to join Coffee Catchup as a Mentee?'] == 'Yes'].copy()
+        #DECISION POINT: remove anyone who selected to be a mentor AND a mentee. Force them to be a mentee ONLY (otherwise they would get two emails)
+        #remove mentees that are in the mentor list from the mentee list
+        mentees = mentees[~mentees.full_name.isin(mentors.full_name)]
+        #store the region 
+        mentee_data_list = mentees[['full_name','region']].to_dict(orient="records")
+        mentee_name_list = mentees.full_name.unique()
+
         
         # Display the DataFrame in the Streamlit app
         st.markdown("Email listserv data:")
@@ -58,16 +69,12 @@ if uploaded_file is not None:
     
         #Note: the code prioritises being matched by region rather than mentor-mentee (to prioritise in person meet ups)
         new_matches = func.add_data_to_new_matches(all_pairs_regional,email_list)      
-        date_input = int(st.number_input(label='Input the date label (eg 202501010201 for Jan to Feb of 2025)'))
-        st.download_button(label = 'Download matches',data = new_matches.to_csv(index=False),file_name=f"new_matches_{date_input}.csv")
+        current_date = datetime.today().strftime('%Y%m%d')
+        st.download_button(label = 'Download matches',data = new_matches.to_csv(index=False),file_name=f"new_matches_{current_date}.csv")
 
-        #add date and concatenate with historic matches
-        #give an error if the user hasn't changed the date yet
-        if date_input == 0:
-            st.warning("Set the date before downloading!")
 
-        new_and_historic = func.save_new_matches_into_historic(date_input,latest_round,new_matches,historic_matches)
-        st.download_button(label = 'Download new and historic matches csv',data = new_and_historic.to_csv(index=False),file_name=f'all_matches_{date_input}.csv')
+        new_and_historic = func.save_new_matches_into_historic(current_date,latest_round,new_matches,historic_matches)
+        st.download_button(label = 'Download new and historic matches csv',data = new_and_historic.to_csv(index=False),file_name=f'all_matches_{current_date}.csv')
     
 
 
