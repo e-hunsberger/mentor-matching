@@ -25,11 +25,16 @@ if uploaded_file is not None:
     if uploaded_file2 is not None:
         # Read the uploaded CSV file into a DataFrame
         email_list = pd.read_csv(uploaded_file2).rename(columns={'Region - closest to you':'region'})
+        #remove any whitespace in the region
+        email_list['region'] = email_list['region'].str.strip()
+        #convert to lowercase
+        email_list['region'] = email_list['region'].str.lower()
+
         #fill any na in the region column with 'Unknown'
         email_list["region"] = email_list["region"].fillna('Unknown')
         #rename columns, sort and only store the latest entry for duplicate names
         email_list['full_name'] = email_list['First Name'] + ' ' + email_list['Last Name']
-        email_list['LAST_CHANGED'] = pd.to_datetime(email_list.LAST_CHANGED, format='%m/%d/%Y %H:%M')
+        email_list['LAST_CHANGED'] = pd.to_datetime(email_list.LAST_CHANGED, format='%Y-%m-%d %H:%M:%S')
         email_list = email_list.sort_values(by='LAST_CHANGED',ascending=False)
         #drop duplicates of the same full name by sorting by the last date they changed their info and taking the first entry
         email_list = email_list.drop_duplicates(subset='full_name', keep='first')
@@ -45,6 +50,7 @@ if uploaded_file is not None:
         #DECISION POINT: remove anyone who selected to be a mentor AND a mentee. Force them to be a mentee ONLY (otherwise they would get two emails)
         #remove mentees that are in the mentor list from the mentee list
         mentees = mentees[~mentees.full_name.isin(mentors.full_name)]
+
         #store the region 
         mentee_data_list = mentees[['full_name','region']].to_dict(orient="records")
         mentee_name_list = mentees.full_name.unique()
@@ -61,6 +67,11 @@ if uploaded_file is not None:
         
         #create the matches 
         all_pairs_regional = func.create_matches(latest_round,historic_matches,region_list,mentee_data_list,mentor_data_list)
+        
+        #validation: check that for mentee-mentee matches, if someone is in the mentee column, they are not in the mentor column
+        check_mentee = all_pairs_regional[all_pairs_regional.type == 'mentee-mentee']
+        assert len(set(check_mentee.mentee).intersection(set(check_mentee.mentor))) == 0
+
         st.markdown("New matches:")
         st.dataframe(all_pairs_regional)
 
@@ -70,8 +81,14 @@ if uploaded_file is not None:
         #Note: the code prioritises being matched by region rather than mentor-mentee (to prioritise in person meet ups)
         new_matches = func.add_data_to_new_matches(all_pairs_regional,email_list)      
         current_date = datetime.today().strftime('%Y%m%d')
-        st.download_button(label = 'Download matches',data = new_matches.to_csv(index=False),file_name=f"new_matches_{current_date}.csv")
-
+        #first download mentor-mentee matches
+        st.download_button(label = 'Download new mentor-mentee matches',
+                           data = new_matches[new_matches.type == 'mentor-mentee']
+                           .to_csv(index=False),file_name=f"new_mentor-mentee_matches_{current_date}.csv")
+        #then download mentee-mentee matches (for a separate email)
+        st.download_button(label = 'Download new mentee-mentee matches',
+                           data = new_matches[new_matches.type == 'mentee-mentee']
+                           .to_csv(index=False),file_name=f"new_mentee-mentee_matches_{current_date}.csv")
 
         new_and_historic = func.save_new_matches_into_historic(current_date,latest_round,new_matches,historic_matches)
         st.download_button(label = 'Download new and historic matches csv',data = new_and_historic.to_csv(index=False),file_name=f'all_matches_{current_date}.csv')

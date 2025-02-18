@@ -18,10 +18,19 @@ def match_pairs_from_lists(primary_list, secondary_list, historical_matches):
             new_pairs.append((primary, secondary))
             unmatched_primary.discard(primary)
             unmatched_secondary.discard(secondary)
+            #in the case it's a mentee-mentee match, try discarding the name from both the primary and secondary 
+            #otherwise mentees may get selected twice
+            try:
+                unmatched_primary.discard(secondary)
+                unmatched_secondary.discard(primary)
+            except:
+                st.markdown('error')
     
     return new_pairs, list(unmatched_primary), list(unmatched_secondary)
 
-
+def split_list(lst):
+    mid = len(lst) // 2
+    return lst[:mid], lst[mid:]
 
 def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data_list):
     
@@ -36,6 +45,7 @@ def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data
     unmatched_mentees_regional = []
     unmatched_mentors_regional = []
     remaining_mentees_final = []
+    mentee_count = 0 
     #loop through the regions to prioritise grouping by region first 
     for region in region_list:
         #filter the prioritised mentees and mentors by region
@@ -64,13 +74,18 @@ def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data
         remaining_mentees = remaining_priority_mentees + remaining_non_priority_mentees
 
         # Mentee-Mentee Matching
-        # Create a shuffled copy of remaining mentees for pairing
-        remaining_mentees_shuffled = remaining_mentees.copy()
-        random.shuffle(remaining_mentees_shuffled)
+        # divide the list into two (otherwise people may get matched twice)
+        remaining_mentees_1, remaining_mentees_2 = split_list(remaining_mentees)
+        # # Create a shuffled copy of remaining mentees for pairing
+        # remaining_mentees_shuffled = remaining_mentees.copy()
+        # random.shuffle(remaining_mentees_shuffled)
 
         mentee_mentee_pairs, _, unmatched_mentees = match_pairs_from_lists(
-            remaining_mentees, remaining_mentees_shuffled, matches, 
+            remaining_mentees_1, remaining_mentees_2, matches, 
         )
+        
+        mentee_count = mentee_count + ((len(mentee_mentee_pairs)*2) + len(mentor_mentee_pairs))
+
 
         # Collect mentees and mentors unmatched by region
         unmatched_mentees_regional = unmatched_mentees_regional + unmatched_mentees
@@ -102,12 +117,8 @@ def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data
                 remaining_mentees_final = remaining_mentees_final + [mentee['full_name']]
                 
     # Validation
-    assert len(all_pairs_regional) == len(mentee_data_list) - len(remaining_mentees_final)
+    assert len(mentee_data_list) == mentee_count
 
-
-    # Optional: Handle unmatched mentees (e.g., send emails)
-    if unmatched_mentees:
-        st.markdown(f"Unmatched mentees: {unmatched_mentees_regional}")
 
     return all_pairs_regional
 
