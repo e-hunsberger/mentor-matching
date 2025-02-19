@@ -9,6 +9,7 @@ st.header('YEPN Coffe Catch Up Matching ☕')
 #user upload historic matches file
 uploaded_file = st.file_uploader("Upload historic matches csv")
 
+
 if uploaded_file is not None:
     try:
         # Read the file as a CSV
@@ -25,6 +26,9 @@ if uploaded_file is not None:
     if uploaded_file2 is not None:
         # Read the uploaded CSV file into a DataFrame
         email_list = pd.read_csv(uploaded_file2).rename(columns={'Region - closest to you':'region'})
+
+
+
         #remove any whitespace in the region
         email_list['region'] = email_list['region'].str.strip()
         #convert to lowercase
@@ -38,6 +42,15 @@ if uploaded_file is not None:
         email_list = email_list.sort_values(by='LAST_CHANGED',ascending=False)
         #drop duplicates of the same full name by sorting by the last date they changed their info and taking the first entry
         email_list = email_list.drop_duplicates(subset='full_name', keep='first')
+
+        # #TEMP FOR MISTAKE: ONE OFF REMOVE EVERYONE FROM ROUND 11 FROM the email list
+        # remove_list1 = historic_matches[historic_matches['round'] == 11].mentee_name.values
+        # remove_list2 = historic_matches[historic_matches['round'] == 11].mentor_name.values
+        # email_list = email_list[~email_list.full_name.isin(remove_list1)]
+        # email_list = email_list[~email_list.full_name.isin(remove_list2)]
+        # st.markdown(remove_list1)
+        # st.markdown(remove_list2)
+
 
         #select mentors and mentees
         #since duplicates have been removed, this will take the latest mentor/mentee status selected by the participant
@@ -64,9 +77,12 @@ if uploaded_file is not None:
         region_list = email_list.region.unique()
         #get the latest round number for tracking 
         latest_round = historic_matches['round'].max()
+
+        #slider for random seed
+        random_seed = st.number_input(label='Random seed',value=42, step=1, format="%d")
         
         #create the matches 
-        all_pairs_regional = func.create_matches(latest_round,historic_matches,region_list,mentee_data_list,mentor_data_list)
+        all_pairs_regional = func.create_matches(latest_round,historic_matches,region_list,mentee_data_list,mentor_data_list,random_seed)
         
         #validation: check that for mentee-mentee matches, if someone is in the mentee column, they are not in the mentor column
         check_mentee = all_pairs_regional[all_pairs_regional.type == 'mentee-mentee']

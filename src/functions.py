@@ -32,8 +32,9 @@ def split_list(lst):
     mid = len(lst) // 2
     return lst[:mid], lst[mid:]
 
-def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data_list):
-    
+def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data_list,random_seed):
+    # Set the seed for reproducibility
+    random.seed(random_seed)
     #Shuffle lists
     random.shuffle(mentee_data_list)
     random.shuffle(mentor_data_list)
