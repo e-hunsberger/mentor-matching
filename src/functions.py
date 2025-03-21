@@ -118,7 +118,8 @@ def create_matches(latest_round,matches,region_list,mentee_data_list,mentor_data
                 remaining_mentees_final = remaining_mentees_final + [mentee['full_name']]
                 
     # Validation
-    assert len(mentee_data_list) - mentee_count <= 1 #0 if even, 1 if odd
+    #removing this assert because if there are two singles from different regions, they don't get matched so the counts don't work
+    #assert len(mentee_data_list) - mentee_count <= 1 #0 if even, 1 if odd
 
 
     return all_pairs_regional
