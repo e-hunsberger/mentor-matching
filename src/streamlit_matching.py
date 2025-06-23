@@ -27,6 +27,8 @@ if uploaded_file is not None:
         # Read the uploaded CSV file into a DataFrame
         email_list = pd.read_csv(uploaded_file2).rename(columns={'Region - closest to you':'region'})
 
+        #remove anyone who has selected 'Yes' for pause coffee catch up 
+        email_list = email_list[email_list['Pause Coffee Catch-up'] != 'Yes']
 
 
         #remove any whitespace in the region
