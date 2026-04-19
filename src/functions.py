@@ -137,7 +137,7 @@ def add_data_to_new_matches(all_pairs_regional,email_list):
                   left_on='mentee',right_on='full_name',suffixes=("_mentor", "_mentee"))
     #replace any NANs with (we don't know sorry!)
     df.fillna("(we don't know sorry, you'll have to ask them!)",inplace=True)
-    st.dataframe(df)
+
     return df[['mentee','mentor','email_address_mentee','email_address_mentor','region_mentee','region_mentor','job_title_mentee','job_title_mentor','organisation_mentee','organisation_mentor','type']]
 
 def save_new_matches_into_historic(date_input,latest_round,new_matches,historic_matches):
