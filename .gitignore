@@ -1,1 +1,5 @@
 data/
+*.csv
+new_matches/
+artifacts/
+src/__pycache__/

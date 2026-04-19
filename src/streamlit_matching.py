@@ -70,6 +70,49 @@ if uploaded_file is not None:
         mentee_data_list = mentees[['full_name','region']].to_dict(orient="records")
         mentee_name_list = mentees.full_name.unique()
 
+        # MANUALLY MATCH
+
+        # Initialization of forced lists
+        # mentors
+        if 'forced_mentor_list' not in st.session_state:
+            st.session_state['forced_mentor_list'] = []
+            forced_mentor_list = []
+        else:
+            forced_mentor_list = st.session_state['forced_mentor_list']
+        # mentees
+        if 'forced_mentee_list' not in st.session_state:
+            st.session_state['forced_mentee_list'] = []
+            forced_mentee_list = []
+        else:
+            forced_mentee_list = st.session_state['forced_mentee_list']
+        
+        # submit changes
+        with st.form("OPTIONAL: manually match mentors-mentees"):
+            forced_mentor = st.selectbox('Select mentor',mentor_name_list)
+            forced_mentee = st.selectbox('Select mentee',mentee_name_list)
+            submitted = st.form_submit_button("Submit")
+            if submitted:
+                forced_mentor_list.append(forced_mentor)
+                forced_mentee_list.append(forced_mentee)
+                st.markdown(f'Mentor list: {forced_mentor_list}')
+                st.markdown(f'Mentee list: {forced_mentee_list}')
+                st.session_state['forced_mentor_list'] = forced_mentor_list
+                st.session_state['forced_mentee_list'] = forced_mentee_list
+        
+        clear_lists = st.button('Clear lists')
+        if clear_lists:
+            st.session_state['forced_mentor_list'] = []
+            forced_mentor_list = st.session_state['forced_mentor_list']
+            st.markdown(f'Mentor list: {forced_mentor_list}')
+            st.session_state['forced_mentee_list'] = []
+            forced_mentee_list = st.session_state['forced_mentee_list']
+            st.markdown(f'Mentee list: {forced_mentee_list}')
+                
+
+        #TO DO: FILTER FORCED MENTEES/MENTORS FROM THE EMAIL LIST AND MANUALLY MATCH THEM
+        #CONTINUE THE REST OF THE REGULAR MATCHING PROCESS
+        #CONCAT THE TWO RESULTS
+
         
         # Display the DataFrame in the Streamlit app
         st.markdown("Email listserv data:")

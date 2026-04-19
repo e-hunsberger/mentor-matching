@@ -1,5 +1,7 @@
 # mentor-matching
 
+Best version: src/streamlit_matching_mailchimp_AI.py with functions_AI.py (works for re-uploading to mailchimp)
+
 ## Local setup and run using uv (recommended)
 
 To install uv, run the following in powershell:
